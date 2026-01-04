@@ -7,10 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.8.4] - 2026-01-04
+
+### Fixed
+- **Critical**: Added missing process error handler in `_spawnPromise()` to prevent server hang when yt-dlp is not installed or fails to spawn ([#23](https://github.com/kevinwatt/yt-dlp-mcp/issues/23))
+- **Critical**: Fixed stdout/stderr mixing in `_spawnPromise()` that caused yt-dlp warnings to corrupt parsed output
+- Fixed VERSION constant mismatch (was `0.7.0`, now synced with package.json)
+- Added try-catch for RegExp construction from `YTDLP_SANITIZE_ILLEGAL_CHARS` env var to prevent startup crash on invalid regex
+- Added validation for `YTDLP_MAX_FILENAME_LENGTH` env var to handle NaN values gracefully
+- Fixed test expectations for search output format and metadata `creators` field null handling
+
 ### Changed
 - **Documentation**: Added warning about JavaScript runtime (deno) requirement when using cookie authentication
   - YouTube authenticated API endpoints require JS challenge solving
   - Without deno, downloads will fail with "n challenge solving failed" error
+- **Documentation**: Added version sync guidance to CLAUDE.md (package.json + src/index.mts)
 
 ---
 

@@ -5,6 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Guidelines
 
 - **Always update CHANGELOG.md** when making changes to the codebase
+- **Version updates require TWO files**:
+  1. `package.json` - line 3: `"version": "x.x.x"`
+  2. `src/index.mts` - line 24: `const VERSION = 'x.x.x'`
 
 ## Development Commands
 

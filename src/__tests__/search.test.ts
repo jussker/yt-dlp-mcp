@@ -48,7 +48,7 @@ describe('Search functionality tests', () => {
       const result = await searchVideos('react tutorial', 2, 0, 'markdown', CONFIG);
 
       // Check for proper formatting
-      expect(result).toMatch(/Found \d+ videos?:/);
+      expect(result).toMatch(/Found \d+ videos? \(showing \d+\):/);
       expect(result).toMatch(/\d+\. \*\*.*\*\*/); // Numbered list with bold titles
       expect(result).toMatch(/📺 Channel: .+/);
       expect(result).toMatch(/⏱️  Duration: .+/);

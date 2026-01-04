@@ -109,13 +109,26 @@ function loadEnvConfig(): DeepPartial<Config> {
     sanitize: {
       replaceChar: process.env.YTDLP_SANITIZE_REPLACE_CHAR,
       truncateSuffix: process.env.YTDLP_SANITIZE_TRUNCATE_SUFFIX,
-      illegalChars: process.env.YTDLP_SANITIZE_ILLEGAL_CHARS ? new RegExp(process.env.YTDLP_SANITIZE_ILLEGAL_CHARS) : undefined,
+      illegalChars: (() => {
+        if (!process.env.YTDLP_SANITIZE_ILLEGAL_CHARS) return undefined;
+        try {
+          return new RegExp(process.env.YTDLP_SANITIZE_ILLEGAL_CHARS);
+        } catch {
+          console.warn('[yt-dlp-mcp] Invalid regex in YTDLP_SANITIZE_ILLEGAL_CHARS, using default');
+          return undefined;
+        }
+      })(),
       reservedNames: process.env.YTDLP_SANITIZE_RESERVED_NAMES?.split(',')
     }
   };
-  
+
   if (process.env.YTDLP_MAX_FILENAME_LENGTH) {
-    fileConfig.maxFilenameLength = parseInt(process.env.YTDLP_MAX_FILENAME_LENGTH);
+    const parsed = parseInt(process.env.YTDLP_MAX_FILENAME_LENGTH, 10);
+    if (!isNaN(parsed) && parsed >= 5) {
+      fileConfig.maxFilenameLength = parsed;
+    } else {
+      console.warn('[yt-dlp-mcp] Invalid YTDLP_MAX_FILENAME_LENGTH, using default');
+    }
   }
   if (process.env.YTDLP_DOWNLOADS_DIR) {
     fileConfig.downloadsDir = process.env.YTDLP_DOWNLOADS_DIR;

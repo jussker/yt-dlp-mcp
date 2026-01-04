@@ -21,7 +21,7 @@ import { searchVideos } from "./modules/search.js";
 import { getVideoMetadata, getVideoMetadataSummary } from "./modules/metadata.js";
 import { getVideoComments, getVideoCommentsSummary } from "./modules/comments.js";
 
-const VERSION = '0.7.0';
+const VERSION = '0.8.4';
 
 // Response format enum
 enum ResponseFormat {

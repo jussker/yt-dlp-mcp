@@ -83,8 +83,9 @@ describe('Video Metadata Extraction', () => {
       if (metadata.description !== undefined) {
         expect(typeof metadata.description).toBe('string');
       }
-      if (metadata.creators !== undefined) {
-        expect(Array.isArray(metadata.creators)).toBe(true);
+      if (metadata.creators !== undefined && metadata.creators !== null) {
+        // creators can be an array or a string depending on the video
+        expect(Array.isArray(metadata.creators) || typeof metadata.creators === 'string').toBe(true);
       }
       if (metadata.timestamp !== undefined) {
         expect(typeof metadata.timestamp).toBe('number');
