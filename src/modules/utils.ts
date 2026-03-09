@@ -17,8 +17,8 @@ import { randomBytes } from 'crypto';
  */
 export function validateUrl(url: string): boolean {
   try {
-    new URL(url);
-    return true;
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
   } catch {
     return false;
   }

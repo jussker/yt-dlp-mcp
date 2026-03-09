@@ -177,3 +177,168 @@ describe('Cookie Configuration', () => {
     });
   });
 });
+
+describe('Security: Environment Variable Validation', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  describe('YTDLP_TEMP_DIR_PREFIX path traversal prevention', () => {
+    test('rejects prefix with forward slash', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.YTDLP_TEMP_DIR_PREFIX = '../../evil-';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.tempDirPrefix).toBe('ytdlp-');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('YTDLP_TEMP_DIR_PREFIX')
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test('rejects prefix with backslash', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.YTDLP_TEMP_DIR_PREFIX = 'evil\\prefix-';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.tempDirPrefix).toBe('ytdlp-');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('YTDLP_TEMP_DIR_PREFIX')
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test('accepts safe prefix', async () => {
+      process.env.YTDLP_TEMP_DIR_PREFIX = 'safe-prefix-';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.tempDirPrefix).toBe('safe-prefix-');
+    });
+
+    test('rejects prefix containing null byte', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.YTDLP_TEMP_DIR_PREFIX = 'evil\x00prefix-';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.tempDirPrefix).toBe('ytdlp-');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('YTDLP_TEMP_DIR_PREFIX')
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('YTDLP_SANITIZE_REPLACE_CHAR validation', () => {
+    test('rejects multi-character replace char', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.YTDLP_SANITIZE_REPLACE_CHAR = '../';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.sanitize.replaceChar).toBe('_');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('YTDLP_SANITIZE_REPLACE_CHAR')
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test('rejects path separator as replace char', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.YTDLP_SANITIZE_REPLACE_CHAR = '/';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.sanitize.replaceChar).toBe('_');
+      consoleSpy.mockRestore();
+    });
+
+    test('rejects backslash as replace char', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.YTDLP_SANITIZE_REPLACE_CHAR = '\\';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.sanitize.replaceChar).toBe('_');
+      consoleSpy.mockRestore();
+    });
+
+    test('accepts safe single-character replace char', async () => {
+      process.env.YTDLP_SANITIZE_REPLACE_CHAR = '-';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.sanitize.replaceChar).toBe('-');
+    });
+
+    test('rejects null byte as replace char', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.YTDLP_SANITIZE_REPLACE_CHAR = '\x00';
+
+      const { loadConfig } = await import('../config.js');
+      const config = loadConfig();
+
+      expect(config.file.sanitize.replaceChar).toBe('_');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('YTDLP_SANITIZE_REPLACE_CHAR')
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+});
+
+describe('Security: URL Protocol Validation', () => {
+  test('validateUrl rejects file:// URLs', async () => {
+    const { validateUrl } = await import('../modules/utils.js');
+    expect(validateUrl('file:///etc/passwd')).toBe(false);
+  });
+
+  test('validateUrl rejects javascript: URLs', async () => {
+    const { validateUrl } = await import('../modules/utils.js');
+    expect(validateUrl('javascript:alert(1)')).toBe(false);
+  });
+
+  test('validateUrl rejects ftp:// URLs', async () => {
+    const { validateUrl } = await import('../modules/utils.js');
+    expect(validateUrl('ftp://example.com/file')).toBe(false);
+  });
+
+  test('validateUrl rejects data: URLs', async () => {
+    const { validateUrl } = await import('../modules/utils.js');
+    expect(validateUrl('data:text/html,<script>alert(1)</script>')).toBe(false);
+  });
+
+  test('validateUrl accepts https:// URLs', async () => {
+    const { validateUrl } = await import('../modules/utils.js');
+    expect(validateUrl('https://www.youtube.com/watch?v=jNQXAC9IVRw')).toBe(true);
+  });
+
+  test('validateUrl accepts http:// URLs', async () => {
+    const { validateUrl } = await import('../modules/utils.js');
+    expect(validateUrl('http://example.com/video')).toBe(true);
+  });
+
+  test('validateUrl rejects invalid URLs', async () => {
+    const { validateUrl } = await import('../modules/utils.js');
+    expect(validateUrl('not-a-url')).toBe(false);
+    expect(validateUrl('')).toBe(false);
+  });
+});
