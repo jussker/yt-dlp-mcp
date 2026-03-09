@@ -1,7 +1,7 @@
 import { readdirSync } from "fs";
 import * as path from "path";
 import type { Config } from "../config.js";
-import { sanitizeFilename, getCookieArgs } from "../config.js";
+import { sanitizeFilename, getCookieArgs, resolveStorageVideoDir } from "../config.js";
 import { _spawnPromise, validateUrl, getFormattedTimestamp, isYouTubeUrl } from "./utils.js";
 
 /**
@@ -30,6 +30,7 @@ import { _spawnPromise, validateUrl, getFormattedTimestamp, isYouTubeUrl } from 
  */
 export async function downloadAudio(url: string, config: Config): Promise<string> {
   const timestamp = getFormattedTimestamp();
+  const targetDir = resolveStorageVideoDir(url, config);
 
   if (!validateUrl(url)) {
     throw new Error("Invalid or unsupported URL format");
@@ -37,7 +38,7 @@ export async function downloadAudio(url: string, config: Config): Promise<string
 
   try {
     const outputTemplate = path.join(
-      config.file.downloadsDir,
+      targetDir,
       sanitizeFilename(`%(title)s [%(id)s] ${timestamp}`, config.file) + '.%(ext)s'
     );
 
@@ -58,12 +59,12 @@ export async function downloadAudio(url: string, config: Config): Promise<string
       url
     ]);
 
-    const files = readdirSync(config.file.downloadsDir);
+    const files = readdirSync(targetDir);
     const downloadedFile = files.find(file => file.includes(timestamp));
     if (!downloadedFile) {
       throw new Error("Download completed but file not found. Check Downloads folder permissions.");
     }
-    return `Audio successfully downloaded as "${downloadedFile}" to ${config.file.downloadsDir}`;
+    return `Audio successfully downloaded as "${downloadedFile}" to ${targetDir}`;
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes("Unsupported URL") || error.message.includes("extractor")) {

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added `YTDLP_STORAGE_ROOT` environment variable to configure a single storage root for auto-organized saved content.
+- Added storage path helpers to partition saved files by `{platform}__{YYYYMMDD}` and per-video subfolder.
+- Added focused tests for storage root configuration and partition path generation.
+
+### Changed
+- Updated video/audio/subtitle/transcript download flows to silently save files into structured storage directories when `YTDLP_STORAGE_ROOT` is configured.
+- Subtitle/transcript responses now include saved storage path information when storage root is enabled.
+
 ### Fixed
 - Ensured `ytdlp_search_videos` builds yt-dlp arguments with options first and search target last, so cookie flags (`--cookies` / `--cookies-from-browser`) are consistently applied.
 - Ensured `src/modules` yt-dlp command execution forwards both lowercase and uppercase proxy environment variables (`http_proxy`/`HTTP_PROXY`, `https_proxy`/`HTTPS_PROXY`).

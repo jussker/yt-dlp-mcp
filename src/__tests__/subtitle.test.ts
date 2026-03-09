@@ -11,21 +11,37 @@ import { describeIfYtDlp } from '../test-utils.js';
 
 describeIfYtDlp('Subtitle Functions', () => {
   const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
+  const testStorageRoot = path.join(os.tmpdir(), 'yt-dlp-test-storage');
   const testConfig = {
     ...CONFIG,
     file: {
       ...CONFIG.file,
       downloadsDir: path.join(os.tmpdir(), 'yt-dlp-test-downloads'),
+      storageRoot: testStorageRoot,
       tempDirPrefix: 'yt-dlp-test-'
     }
   };
 
+  const listFilesRecursively = async (dir: string): Promise<string[]> => {
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(entries.map(async (entry) => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return listFilesRecursively(fullPath);
+      }
+      return [fullPath];
+    }));
+    return files.flat();
+  };
+
   beforeEach(async () => {
     await fs.promises.mkdir(testConfig.file.downloadsDir, { recursive: true });
+    await fs.promises.mkdir(testStorageRoot, { recursive: true });
   });
 
   afterEach(async () => {
     await fs.promises.rm(testConfig.file.downloadsDir, { recursive: true, force: true });
+    await fs.promises.rm(testStorageRoot, { recursive: true, force: true });
   });
 
   describe('listSubtitles', () => {
@@ -45,6 +61,10 @@ describeIfYtDlp('Subtitle Functions', () => {
     test('downloads auto-generated subtitles successfully', async () => {
       const result = await downloadSubtitles(testUrl, 'en', testConfig);
       expect(result).toContain('WEBVTT');
+      expect(result).toContain('Saved subtitle files to:');
+
+      const files = await listFilesRecursively(testStorageRoot);
+      expect(files.some(file => file.endsWith('.vtt'))).toBe(true);
     }, 30000);
 
     test('handles missing language', async () => {
@@ -62,6 +82,10 @@ describeIfYtDlp('Subtitle Functions', () => {
       expect(result).not.toContain('WEBVTT');
       expect(result).not.toContain('-->');
       expect(result).not.toMatch(/^\d+$/m);
+      expect(result).toContain('Saved transcript to:');
+
+      const files = await listFilesRecursively(testStorageRoot);
+      expect(files.some(file => file.endsWith('transcript_en.txt'))).toBe(true);
     }, 30000);
 
     test('handles invalid URL', async () => {

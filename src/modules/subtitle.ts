@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import type { Config } from '../config.js';
-import { getCookieArgs } from '../config.js';
+import { getCookieArgs, resolveStorageVideoDir } from '../config.js';
 import { _spawnPromise, validateUrl, cleanSubtitleToTranscript } from "./utils.js";
 
 /**
@@ -93,7 +93,8 @@ export async function downloadSubtitles(
     throw new Error('Invalid or unsupported URL format. Please provide a valid video URL (e.g., https://youtube.com/watch?v=...)');
   }
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), config.file.tempDirPrefix));
+  const storageDir = config.file.storageRoot ? resolveStorageVideoDir(url, config) : undefined;
+  const tempDir = storageDir ?? fs.mkdtempSync(path.join(os.tmpdir(), config.file.tempDirPrefix));
 
   try {
     await _spawnPromise('yt-dlp', [
@@ -125,6 +126,9 @@ export async function downloadSubtitles(
       output += "\n\n⚠️ Subtitle content truncated due to size. Consider using ytdlp_download_transcript for plain text.";
     }
 
+    if (storageDir) {
+      return `${output}\n\nSaved subtitle files to: ${storageDir}`;
+    }
     return output;
   } catch (error) {
     if (error instanceof Error) {
@@ -140,7 +144,9 @@ export async function downloadSubtitles(
     }
     throw error;
   } finally {
-    fs.rmSync(tempDir, { recursive: true, force: true });
+    if (!storageDir) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   }
 }
 
@@ -172,7 +178,8 @@ export async function downloadTranscript(
     throw new Error('Invalid or unsupported URL format. Please provide a valid video URL (e.g., https://youtube.com/watch?v=...)');
   }
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), config.file.tempDirPrefix));
+  const storageDir = config.file.storageRoot ? resolveStorageVideoDir(url, config) : undefined;
+  const tempDir = storageDir ?? fs.mkdtempSync(path.join(os.tmpdir(), config.file.tempDirPrefix));
 
   try {
     await _spawnPromise('yt-dlp', [
@@ -209,6 +216,11 @@ export async function downloadTranscript(
       transcriptContent = truncated + "\n\n⚠️ Transcript truncated due to length. This is a partial transcript.";
     }
 
+    if (storageDir) {
+      const transcriptPath = path.join(storageDir, `transcript_${language}.txt`);
+      fs.writeFileSync(transcriptPath, transcriptContent, 'utf8');
+      return `${transcriptContent}\n\nSaved transcript to: ${transcriptPath}`;
+    }
     return transcriptContent;
   } catch (error) {
     if (error instanceof Error) {
@@ -224,6 +236,8 @@ export async function downloadTranscript(
     }
     throw error;
   } finally {
-    fs.rmSync(tempDir, { recursive: true, force: true });
+    if (!storageDir) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   }
-} 
+}

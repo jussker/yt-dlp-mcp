@@ -24,6 +24,7 @@ export interface Config {
   file: {
     maxFilenameLength: number;
     downloadsDir: string;
+    storageRoot?: string;
     tempDirPrefix: string;
     // Filename processing configuration
     sanitize: {
@@ -142,6 +143,14 @@ function loadEnvConfig(): DeepPartial<Config> {
   if (process.env.YTDLP_DOWNLOADS_DIR) {
     fileConfig.downloadsDir = process.env.YTDLP_DOWNLOADS_DIR;
   }
+  if (process.env.YTDLP_STORAGE_ROOT) {
+    const storageRoot = process.env.YTDLP_STORAGE_ROOT;
+    if (storageRoot.includes('\x00')) {
+      console.warn('[yt-dlp-mcp] Invalid YTDLP_STORAGE_ROOT (must not contain null byte), using default');
+    } else {
+      fileConfig.storageRoot = path.resolve(storageRoot);
+    }
+  }
   if (process.env.YTDLP_TEMP_DIR_PREFIX) {
     const prefix = process.env.YTDLP_TEMP_DIR_PREFIX;
     // Prevent path traversal: prefix must not contain path separators or null bytes
@@ -201,6 +210,9 @@ function validateConfig(config: Config): void {
   if (!config.file.downloadsDir) {
     throw new Error('downloadsDir must be specified');
   }
+  if (config.file.storageRoot && !path.isAbsolute(config.file.storageRoot)) {
+    throw new Error('storageRoot must be an absolute path');
+  }
 
   // Validate temporary directory prefix
   if (!config.file.tempDirPrefix) {
@@ -259,6 +271,7 @@ function mergeConfig(base: Config, override: DeepPartial<Config>): Config {
     file: {
       maxFilenameLength: override.file?.maxFilenameLength || base.file.maxFilenameLength,
       downloadsDir: override.file?.downloadsDir || base.file.downloadsDir,
+      storageRoot: override.file?.storageRoot ?? base.file.storageRoot,
       tempDirPrefix: override.file?.tempDirPrefix || base.file.tempDirPrefix,
       sanitize: {
         replaceChar: override.file?.sanitize?.replaceChar || base.file.sanitize.replaceChar,
@@ -317,6 +330,75 @@ export function sanitizeFilename(filename: string, config: Config['file']): stri
   }
   
   return safe;
+}
+
+function sanitizePathSegment(value: string, fallback: string): string {
+  const trimmed = value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+  return trimmed || fallback;
+}
+
+export function extractPlatformFromUrl(url: string): string {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+
+    if (hostname.includes('youtu.be') || hostname.includes('youtube.com')) return 'youtube';
+    if (hostname.includes('bilibili.com')) return 'bilibili';
+    if (hostname.includes('tiktok.com')) return 'tiktok';
+    if (hostname.includes('x.com') || hostname.includes('twitter.com')) return 'twitter';
+    if (hostname.includes('instagram.com')) return 'instagram';
+    if (hostname.includes('vimeo.com')) return 'vimeo';
+    if (hostname.includes('facebook.com') || hostname.includes('fb.watch')) return 'facebook';
+    if (hostname.includes('twitch.tv')) return 'twitch';
+
+    const compactHost = hostname.replace(/^(www|m)\./, '');
+    return sanitizePathSegment(compactHost.split('.')[0] || compactHost, 'unknown');
+  } catch {
+    return 'unknown';
+  }
+}
+
+export function extractVideoIdFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const params = parsed.searchParams;
+    const knownParamKeys = ['v', 'id', 'video_id', 'item_id'];
+    for (const key of knownParamKeys) {
+      const value = params.get(key);
+      if (value) return sanitizePathSegment(value, 'video');
+    }
+
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    if (parsed.hostname.includes('youtu.be') && segments[0]) {
+      return sanitizePathSegment(segments[0], 'video');
+    }
+    if (segments.length > 0) {
+      return sanitizePathSegment(segments[segments.length - 1], 'video');
+    }
+  } catch {
+    // noop
+  }
+  return 'video';
+}
+
+function getDatePartition(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}${m}${d}`;
+}
+
+export function resolveStorageVideoDir(url: string, config: Config): string {
+  if (!config.file.storageRoot) {
+    fs.mkdirSync(config.file.downloadsDir, { recursive: true });
+    return config.file.downloadsDir;
+  }
+
+  const platform = extractPlatformFromUrl(url);
+  const datePartition = getDatePartition();
+  const videoId = extractVideoIdFromUrl(url);
+  const targetDir = path.join(config.file.storageRoot, `${platform}__${datePartition}`, videoId);
+  fs.mkdirSync(targetDir, { recursive: true });
+  return targetDir;
 }
 
 /**
