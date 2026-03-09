@@ -337,18 +337,22 @@ function sanitizePathSegment(value: string, fallback: string): string {
   return trimmed || fallback;
 }
 
+function hostMatches(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`);
+}
+
 export function extractPlatformFromUrl(url: string): string {
   try {
     const hostname = new URL(url).hostname.toLowerCase();
 
-    if (hostname.includes('youtu.be') || hostname.includes('youtube.com')) return 'youtube';
-    if (hostname.includes('bilibili.com')) return 'bilibili';
-    if (hostname.includes('tiktok.com')) return 'tiktok';
-    if (hostname.includes('x.com') || hostname.includes('twitter.com')) return 'twitter';
-    if (hostname.includes('instagram.com')) return 'instagram';
-    if (hostname.includes('vimeo.com')) return 'vimeo';
-    if (hostname.includes('facebook.com') || hostname.includes('fb.watch')) return 'facebook';
-    if (hostname.includes('twitch.tv')) return 'twitch';
+    if (hostMatches(hostname, 'youtu.be') || hostMatches(hostname, 'youtube.com')) return 'youtube';
+    if (hostMatches(hostname, 'bilibili.com')) return 'bilibili';
+    if (hostMatches(hostname, 'tiktok.com')) return 'tiktok';
+    if (hostMatches(hostname, 'x.com') || hostMatches(hostname, 'twitter.com')) return 'twitter';
+    if (hostMatches(hostname, 'instagram.com')) return 'instagram';
+    if (hostMatches(hostname, 'vimeo.com')) return 'vimeo';
+    if (hostMatches(hostname, 'facebook.com') || hostMatches(hostname, 'fb.watch')) return 'facebook';
+    if (hostMatches(hostname, 'twitch.tv')) return 'twitch';
 
     const compactHost = hostname.replace(/^(www|m)\./, '');
     return sanitizePathSegment(compactHost.split('.')[0] || compactHost, 'unknown');
