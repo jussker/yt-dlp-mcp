@@ -1,20 +1,14 @@
 // @ts-nocheck
 // @jest-environment node
 import { describe, test, expect, beforeAll } from '@jest/globals';
-import { spawnSync } from 'child_process';
 import { getVideoMetadata, getVideoMetadataSummary } from '../modules/metadata.js';
 import type { VideoMetadata } from '../modules/metadata.js';
 import { CONFIG } from '../config.js';
+import { describeIfYtDlp } from '../test-utils.js';
 
 // 設置 Python 環境
 process.env.PYTHONPATH = '';
 process.env.PYTHONHOME = '';
-
-const hasYtDlp = (() => {
-  const result = spawnSync('yt-dlp', ['--version'], { stdio: 'ignore' });
-  return !result.error && result.status === 0;
-})();
-const describeIfYtDlp = hasYtDlp ? describe : describe.skip;
 
 describeIfYtDlp('Video Metadata Extraction', () => {
   const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';

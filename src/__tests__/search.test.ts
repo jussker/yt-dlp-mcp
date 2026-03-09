@@ -1,15 +1,9 @@
 // @ts-nocheck
 // @jest-environment node
 import { describe, test, expect } from '@jest/globals';
-import { spawnSync } from 'child_process';
 import { searchVideos } from '../modules/search.js';
 import { CONFIG } from '../config.js';
-
-const hasYtDlp = (() => {
-  const result = spawnSync('yt-dlp', ['--version'], { stdio: 'ignore' });
-  return !result.error && result.status === 0;
-})();
-const describeIfYtDlp = hasYtDlp ? describe : describe.skip;
+import { describeIfYtDlp } from '../test-utils.js';
 
 describeIfYtDlp('Search functionality tests', () => {
 

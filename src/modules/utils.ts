@@ -2,6 +2,11 @@ import * as fs from 'fs';
 import { spawn } from 'child_process';
 import { randomBytes } from 'crypto';
 
+function normalizeProxyEnv(env: NodeJS.ProcessEnv, lowercaseKey: string, uppercaseKey: string): void {
+  if (env[lowercaseKey] && !env[uppercaseKey]) env[uppercaseKey] = env[lowercaseKey];
+  if (env[uppercaseKey] && !env[lowercaseKey]) env[lowercaseKey] = env[uppercaseKey];
+}
+
 /**
  * Validates if a given string is a valid URL.
  * 
@@ -91,12 +96,10 @@ export async function safeCleanup(directory: string): Promise<void> {
 export function _spawnPromise(command: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const env = { ...process.env };
-    const normalizeProxyEnv = (lowercaseKey: string, uppercaseKey: string) => {
-      if (env[lowercaseKey] && !env[uppercaseKey]) env[uppercaseKey] = env[lowercaseKey];
-      if (env[uppercaseKey] && !env[lowercaseKey]) env[lowercaseKey] = env[uppercaseKey];
-    };
-    normalizeProxyEnv('http_proxy', 'HTTP_PROXY');
-    normalizeProxyEnv('https_proxy', 'HTTPS_PROXY');
+    // Keep both proxy env key casings in sync because different runtimes/tools
+    // may read either lowercase or uppercase variants.
+    normalizeProxyEnv(env, 'http_proxy', 'HTTP_PROXY');
+    normalizeProxyEnv(env, 'https_proxy', 'HTTPS_PROXY');
 
     const childProcess = spawn(command, args, { env });
     let stdout = '';

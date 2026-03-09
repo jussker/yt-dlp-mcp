@@ -47,4 +47,27 @@ describe('_spawnPromise proxy env support', () => {
 
     expect(output).toBe('http://127.0.0.1:7890|http://127.0.0.1:7890');
   });
+
+  test('propagates uppercase proxy env to lowercase variant', async () => {
+    process.env.HTTP_PROXY = 'http://127.0.0.1:9999';
+
+    const output = await _spawnPromise(process.execPath, [
+      '-e',
+      'process.stdout.write(`${process.env.http_proxy}|${process.env.HTTP_PROXY}`)'
+    ]);
+
+    expect(output).toBe('http://127.0.0.1:9999|http://127.0.0.1:9999');
+  });
+
+  test('preserves both proxy variants when both are set to different values', async () => {
+    process.env.http_proxy = 'http://127.0.0.1:7000';
+    process.env.HTTP_PROXY = 'http://127.0.0.1:8000';
+
+    const output = await _spawnPromise(process.execPath, [
+      '-e',
+      'process.stdout.write(`${process.env.http_proxy}|${process.env.HTTP_PROXY}`)'
+    ]);
+
+    expect(output).toBe('http://127.0.0.1:7000|http://127.0.0.1:8000');
+  });
 });
