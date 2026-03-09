@@ -7,8 +7,9 @@ import { listSubtitles, downloadSubtitles, downloadTranscript } from '../modules
 import { cleanSubtitleToTranscript } from '../modules/utils.js';
 import { CONFIG } from '../config.js';
 import * as fs from 'fs';
+import { describeIfYtDlp } from '../test-utils.js';
 
-describe('Subtitle Functions', () => {
+describeIfYtDlp('Subtitle Functions', () => {
   const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
   const testConfig = {
     ...CONFIG,

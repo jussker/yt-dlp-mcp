@@ -4,12 +4,13 @@ import { describe, test, expect, beforeAll } from '@jest/globals';
 import { getVideoMetadata, getVideoMetadataSummary } from '../modules/metadata.js';
 import type { VideoMetadata } from '../modules/metadata.js';
 import { CONFIG } from '../config.js';
+import { describeIfYtDlp } from '../test-utils.js';
 
 // 設置 Python 環境
 process.env.PYTHONPATH = '';
 process.env.PYTHONHOME = '';
 
-describe('Video Metadata Extraction', () => {
+describeIfYtDlp('Video Metadata Extraction', () => {
   const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
 
   describe('getVideoMetadata', () => {

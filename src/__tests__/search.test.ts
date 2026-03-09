@@ -3,8 +3,9 @@
 import { describe, test, expect } from '@jest/globals';
 import { searchVideos } from '../modules/search.js';
 import { CONFIG } from '../config.js';
+import { describeIfYtDlp } from '../test-utils.js';
 
-describe('Search functionality tests', () => {
+describeIfYtDlp('Search functionality tests', () => {
 
   describe('searchVideos', () => {
     test('should successfully search for JavaScript tutorials', async () => {

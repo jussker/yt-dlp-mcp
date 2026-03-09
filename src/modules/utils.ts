@@ -2,6 +2,11 @@ import * as fs from 'fs';
 import { spawn } from 'child_process';
 import { randomBytes } from 'crypto';
 
+function normalizeProxyEnv(env: NodeJS.ProcessEnv, lowercaseKey: string, uppercaseKey: string): void {
+  if (env[lowercaseKey] && !env[uppercaseKey]) env[uppercaseKey] = env[lowercaseKey];
+  if (env[uppercaseKey] && !env[lowercaseKey]) env[lowercaseKey] = env[uppercaseKey];
+}
+
 /**
  * Validates if a given string is a valid URL.
  * 
@@ -90,23 +95,29 @@ export async function safeCleanup(directory: string): Promise<void> {
  */
 export function _spawnPromise(command: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const process = spawn(command, args);
+    const env = { ...process.env };
+    // Keep both proxy env key casings in sync because different runtimes/tools
+    // may read either lowercase or uppercase variants.
+    normalizeProxyEnv(env, 'http_proxy', 'HTTP_PROXY');
+    normalizeProxyEnv(env, 'https_proxy', 'HTTPS_PROXY');
+
+    const childProcess = spawn(command, args, { env });
     let stdout = '';
     let stderr = '';
 
-    process.on('error', (err) => {
+    childProcess.on('error', (err) => {
       reject(new Error(`Failed to spawn ${command}: ${err.message}`));
     });
 
-    process.stdout.on('data', (data) => {
+    childProcess.stdout.on('data', (data) => {
       stdout += data.toString();
     });
 
-    process.stderr.on('data', (data) => {
+    childProcess.stderr.on('data', (data) => {
       stderr += data.toString();
     });
 
-    process.on('close', (code) => {
+    childProcess.on('close', (code) => {
       if (code === 0) {
         resolve(stdout);
       } else {

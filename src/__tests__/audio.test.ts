@@ -6,8 +6,9 @@ import * as path from 'path';
 import { downloadAudio } from '../modules/audio.js';
 import { CONFIG } from '../config.js';
 import * as fs from 'fs';
+import { describeIfYtDlp } from '../test-utils.js';
 
-describe('downloadAudio', () => {
+describeIfYtDlp('downloadAudio', () => {
   const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
   const testConfig = {
     ...CONFIG,

@@ -6,12 +6,13 @@ import * as path from 'path';
 import { downloadVideo } from '../modules/video.js';
 import { CONFIG } from '../config.js';
 import * as fs from 'fs';
+import { describeIfYtDlp } from '../test-utils.js';
 
 // 設置 Python 環境
 process.env.PYTHONPATH = '';
 process.env.PYTHONHOME = '';
 
-describe('downloadVideo', () => {
+describeIfYtDlp('downloadVideo', () => {
   const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
   const testConfig = {
     ...CONFIG,
