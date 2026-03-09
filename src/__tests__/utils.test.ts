@@ -1,4 +1,3 @@
-// @ts-nocheck
 // @jest-environment node
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { _spawnPromise } from '../modules/utils.js';

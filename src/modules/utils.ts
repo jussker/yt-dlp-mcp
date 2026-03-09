@@ -91,10 +91,12 @@ export async function safeCleanup(directory: string): Promise<void> {
 export function _spawnPromise(command: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const env = { ...process.env };
-    if (env.http_proxy && !env.HTTP_PROXY) env.HTTP_PROXY = env.http_proxy;
-    if (env.HTTP_PROXY && !env.http_proxy) env.http_proxy = env.HTTP_PROXY;
-    if (env.https_proxy && !env.HTTPS_PROXY) env.HTTPS_PROXY = env.https_proxy;
-    if (env.HTTPS_PROXY && !env.https_proxy) env.https_proxy = env.HTTPS_PROXY;
+    const normalizeProxyEnv = (lowercaseKey: string, uppercaseKey: string) => {
+      if (env[lowercaseKey] && !env[uppercaseKey]) env[uppercaseKey] = env[lowercaseKey];
+      if (env[uppercaseKey] && !env[lowercaseKey]) env[lowercaseKey] = env[uppercaseKey];
+    };
+    normalizeProxyEnv('http_proxy', 'HTTP_PROXY');
+    normalizeProxyEnv('https_proxy', 'HTTPS_PROXY');
 
     const childProcess = spawn(command, args, { env });
     let stdout = '';
