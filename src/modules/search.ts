@@ -77,7 +77,6 @@ export async function searchVideos(
       const searchUrl = `https://www.youtube.com/results?search_query=${encodedQuery}&sp=${spParam}`;
 
       args = [
-        searchUrl,
         "--flat-playlist",
         "--print", "title",
         "--print", "id",
@@ -86,20 +85,21 @@ export async function searchVideos(
         "--no-download",
         "--quiet",
         "--playlist-end", String(totalToFetch),
-        ...getCookieArgs(config)
+        ...getCookieArgs(config),
+        searchUrl
       ];
     } else {
       // Use ytsearch prefix for regular search
       const searchQuery = `ytsearch${totalToFetch}:${cleanQuery}`;
       args = [
-        searchQuery,
         "--print", "title",
         "--print", "id",
         "--print", "uploader",
         "--print", "duration",
         "--no-download",
         "--quiet",
-        ...getCookieArgs(config)
+        ...getCookieArgs(config),
+        searchQuery
       ];
     }
 
