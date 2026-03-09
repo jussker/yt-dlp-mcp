@@ -90,23 +90,29 @@ export async function safeCleanup(directory: string): Promise<void> {
  */
 export function _spawnPromise(command: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const process = spawn(command, args);
+    const env = { ...process.env };
+    if (env.http_proxy && !env.HTTP_PROXY) env.HTTP_PROXY = env.http_proxy;
+    if (env.HTTP_PROXY && !env.http_proxy) env.http_proxy = env.HTTP_PROXY;
+    if (env.https_proxy && !env.HTTPS_PROXY) env.HTTPS_PROXY = env.https_proxy;
+    if (env.HTTPS_PROXY && !env.https_proxy) env.https_proxy = env.HTTPS_PROXY;
+
+    const childProcess = spawn(command, args, { env });
     let stdout = '';
     let stderr = '';
 
-    process.on('error', (err) => {
+    childProcess.on('error', (err) => {
       reject(new Error(`Failed to spawn ${command}: ${err.message}`));
     });
 
-    process.stdout.on('data', (data) => {
+    childProcess.stdout.on('data', (data) => {
       stdout += data.toString();
     });
 
-    process.stderr.on('data', (data) => {
+    childProcess.stderr.on('data', (data) => {
       stderr += data.toString();
     });
 
-    process.on('close', (code) => {
+    childProcess.on('close', (code) => {
       if (code === 0) {
         resolve(stdout);
       } else {
