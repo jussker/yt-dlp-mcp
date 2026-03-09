@@ -99,7 +99,6 @@ export async function getVideoComments(
   const args = [
     "--dump-json",
     "--no-warnings",
-    "--no-check-certificate",
     "--write-comments",
     "--extractor-args", `youtube:comment_sort=${sortOrder};max_comments=${maxComments},all,all`,
     "--skip-download",

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **HIGH**: Removed hardcoded `--no-check-certificate` flag from `metadata.ts` and `comments.ts`. This flag was disabling SSL/TLS certificate verification for all yt-dlp metadata and comments requests, enabling potential man-in-the-middle attacks.
+- **MEDIUM**: Restricted URL validation in `validateUrl()` to accept only `http://` and `https://` protocols. Previously, any URL scheme (including `file://`, `ftp://`, `javascript:`, `data:`) was accepted.
+- **MEDIUM**: Added path traversal prevention for `YTDLP_TEMP_DIR_PREFIX` environment variable. A prefix containing path separators (`/` or `\`) could have caused temp directories to be created outside the system temp directory.
+- **LOW**: Added validation for `YTDLP_SANITIZE_REPLACE_CHAR` environment variable. The value must now be a single character that is not a path separator (`/`, `\`, `:`) or null byte, preventing potential filename path traversal via the sanitizer replace character.
+
 ---
 
 ## [0.8.4] - 2026-01-04

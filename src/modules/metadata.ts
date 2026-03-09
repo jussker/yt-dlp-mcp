@@ -158,7 +158,6 @@ export async function getVideoMetadata(
   const args = [
     "--dump-json",
     "--no-warnings",
-    "--no-check-certificate",
     ...(_config ? getCookieArgs(_config) : []),
     url
   ];

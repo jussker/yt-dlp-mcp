@@ -107,7 +107,16 @@ function loadEnvConfig(): DeepPartial<Config> {
   // File configuration
   const fileConfig: DeepPartial<Config['file']> = {
     sanitize: {
-      replaceChar: process.env.YTDLP_SANITIZE_REPLACE_CHAR,
+      replaceChar: (() => {
+        const val = process.env.YTDLP_SANITIZE_REPLACE_CHAR;
+        if (!val) return undefined;
+        // Must be a single character that is not a path separator or null byte
+        if (val.length !== 1 || /[\/\\:\x00]/.test(val)) {
+          console.warn('[yt-dlp-mcp] Invalid YTDLP_SANITIZE_REPLACE_CHAR (must be a single safe character), using default');
+          return undefined;
+        }
+        return val;
+      })(),
       truncateSuffix: process.env.YTDLP_SANITIZE_TRUNCATE_SUFFIX,
       illegalChars: (() => {
         if (!process.env.YTDLP_SANITIZE_ILLEGAL_CHARS) return undefined;
@@ -134,7 +143,13 @@ function loadEnvConfig(): DeepPartial<Config> {
     fileConfig.downloadsDir = process.env.YTDLP_DOWNLOADS_DIR;
   }
   if (process.env.YTDLP_TEMP_DIR_PREFIX) {
-    fileConfig.tempDirPrefix = process.env.YTDLP_TEMP_DIR_PREFIX;
+    const prefix = process.env.YTDLP_TEMP_DIR_PREFIX;
+    // Prevent path traversal: prefix must not contain path separators or null bytes
+    if (/[\/\\\x00]/.test(prefix)) {
+      console.warn('[yt-dlp-mcp] Invalid YTDLP_TEMP_DIR_PREFIX (must not contain path separators), using default');
+    } else {
+      fileConfig.tempDirPrefix = prefix;
+    }
   }
 
   if (Object.keys(fileConfig).length > 0) {
