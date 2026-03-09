@@ -1,13 +1,20 @@
 // @ts-nocheck
 // @jest-environment node
 import { describe, test, expect } from '@jest/globals';
+import { spawnSync } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
 import { downloadAudio } from '../modules/audio.js';
 import { CONFIG } from '../config.js';
 import * as fs from 'fs';
 
-describe('downloadAudio', () => {
+const hasYtDlp = (() => {
+  const result = spawnSync('yt-dlp', ['--version'], { stdio: 'ignore' });
+  return !result.error && result.status === 0;
+})();
+const describeIfYtDlp = hasYtDlp ? describe : describe.skip;
+
+describeIfYtDlp('downloadAudio', () => {
   const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
   const testConfig = {
     ...CONFIG,

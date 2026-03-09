@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Ensured `ytdlp_search_videos` builds yt-dlp arguments with options first and search target last, so cookie flags (`--cookies` / `--cookies-from-browser`) are consistently applied.
 - Ensured `src/modules` yt-dlp command execution forwards both lowercase and uppercase proxy environment variables (`http_proxy`/`HTTP_PROXY`, `https_proxy`/`HTTPS_PROXY`).
+- Made integration-style tests auto-skip when local `yt-dlp` binary is unavailable, preventing `ENOENT` failures in clean CI/local environments.
 
 ### Added
 - Added focused tests to verify all `src/modules` yt-dlp entry points include cookie arguments when cookies are configured.
