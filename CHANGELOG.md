@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Ensured `ytdlp_search_videos` builds yt-dlp arguments with options first and search target last, so cookie flags (`--cookies` / `--cookies-from-browser`) are consistently applied.
+
+### Added
+- Added focused tests to verify all `src/modules` yt-dlp entry points include cookie arguments when cookies are configured.
+
 ### Security
 - **HIGH**: Removed hardcoded `--no-check-certificate` flag from `metadata.ts` and `comments.ts`. This flag was disabling SSL/TLS certificate verification for all yt-dlp metadata and comments requests, enabling potential man-in-the-middle attacks.
 - **MEDIUM**: Restricted URL validation in `validateUrl()` to accept only `http://` and `https://` protocols. Previously, any URL scheme (including `file://`, `ftp://`, `javascript:`, `data:`) was accepted.
