@@ -342,3 +342,50 @@ describe('Security: URL Protocol Validation', () => {
     expect(validateUrl('')).toBe(false);
   });
 });
+
+describe('Storage Root Configuration', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  test('loads YTDLP_STORAGE_ROOT as absolute path', async () => {
+    process.env.YTDLP_STORAGE_ROOT = './relative-storage-root';
+    const { loadConfig } = await import('../config.js');
+    const config = loadConfig();
+    expect(path.isAbsolute(config.file.storageRoot)).toBe(true);
+    expect(config.file.storageRoot).toContain('relative-storage-root');
+  });
+
+  test('extracts known platform from URL', async () => {
+    const { extractPlatformFromUrl } = await import('../config.js');
+    expect(extractPlatformFromUrl('https://www.youtube.com/watch?v=jNQXAC9IVRw')).toBe('youtube');
+    expect(extractPlatformFromUrl('https://www.tiktok.com/@demo/video/123')).toBe('tiktok');
+  });
+
+  test('extracts video id from URL query and path', async () => {
+    const { extractVideoIdFromUrl } = await import('../config.js');
+    expect(extractVideoIdFromUrl('https://www.youtube.com/watch?v=jNQXAC9IVRw')).toBe('jnqxac9ivrw');
+    expect(extractVideoIdFromUrl('https://youtu.be/jNQXAC9IVRw')).toBe('jnqxac9ivrw');
+  });
+
+  test('builds platform__date partition with per-video folder', async () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ytdlp-storage-test-'));
+    process.env.YTDLP_STORAGE_ROOT = tempRoot;
+    const { loadConfig, resolveStorageVideoDir } = await import('../config.js');
+    const config = loadConfig();
+    const dir = resolveStorageVideoDir('https://www.youtube.com/watch?v=jNQXAC9IVRw', config);
+
+    expect(fs.existsSync(dir)).toBe(true);
+    expect(dir).toContain(path.join(tempRoot, 'youtube__'));
+    expect(path.basename(dir)).toBe('jnqxac9ivrw');
+
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  });
+});

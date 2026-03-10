@@ -391,6 +391,10 @@ Get human-readable metadata summary
 # Downloads directory (default: ~/Downloads)
 YTDLP_DOWNLOADS_DIR=/path/to/downloads
 
+# Storage root directory for auto-organized output (optional)
+# Structure: {storageRoot}/{platform}__{YYYYMMDD}/{videoId}/
+YTDLP_STORAGE_ROOT=/path/to/storage-root
+
 # Default resolution (default: 720p)
 YTDLP_DEFAULT_RESOLUTION=1080p
 

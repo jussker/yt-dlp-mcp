@@ -1,6 +1,6 @@
 import * as path from "path";
 import type { Config } from "../config.js";
-import { sanitizeFilename, getCookieArgs } from "../config.js";
+import { sanitizeFilename, getCookieArgs, resolveStorageVideoDir } from "../config.js";
 import {
   _spawnPromise,
   validateUrl,
@@ -52,7 +52,7 @@ export async function downloadVideo(
   startTime?: string,
   endTime?: string
 ): Promise<string> {
-  const userDownloadsDir = config.file.downloadsDir;
+  const userDownloadsDir = resolveStorageVideoDir(url, config);
 
   if (!validateUrl(url)) {
     throw new Error("Invalid or unsupported URL format");

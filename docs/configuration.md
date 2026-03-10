@@ -11,6 +11,7 @@ interface Config {
   file: {
     maxFilenameLength: number;
     downloadsDir: string;
+    storageRoot?: string;
     tempDirPrefix: string;
     sanitize: {
       replaceChar: string;
@@ -36,6 +37,7 @@ interface Config {
 |----------|-------------|---------|
 | `YTDLP_MAX_FILENAME_LENGTH` | Maximum length for filenames | 50 |
 | `YTDLP_DOWNLOADS_DIR` | Download directory path | `~/Downloads` |
+| `YTDLP_STORAGE_ROOT` | Storage root path for `{platform}__{YYYYMMDD}/{videoId}` partitions | unset |
 | `YTDLP_TEMP_DIR_PREFIX` | Prefix for temporary directories | `ytdlp-` |
 | `YTDLP_SANITIZE_REPLACE_CHAR` | Character to replace illegal characters | `_` |
 | `YTDLP_SANITIZE_TRUNCATE_SUFFIX` | Suffix for truncated filenames | `...` |
